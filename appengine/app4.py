@@ -1,71 +1,96 @@
-# Import packages
-from dash import Dash, html, dash_table, dcc, callback, Output, Input
+# app_edu_vote.py
+
 import pandas as pd
+import requests
+from dash import Dash, html, dcc
 import plotly.express as px
 
-from google.cloud import storage
-import os
-from io import StringIO
+# ------------------ Data Setup ------------------
 
+def fetch_and_prepare_data():
+    # S0101: Demographics
+    url1 = "https://api.census.gov/data/2016/acs/acs5/subject?get=group(S0101)&ucgid=pseudo(0400000US06$0500000)"
+    data1 = requests.get(url1).json()
+    df1 = pd.DataFrame(data1[1:], columns=data1[0])
 
-# BLOB is an acronym for "Binary Large Object". It's a data type that stores binary data, such as images, videos, and audio.
-def get_csv_from_gcs(bucket_name, source_blob_name):
-    """Downloads a blob from the bucket."""
-    # The ID of your GCS bucket
-    # bucket_name = "your-bucket-name"
+    # S0501: Nativity and earnings
+    url2 = "https://api.census.gov/data/2016/acs/acs5/subject?get=group(S0501)&ucgid=pseudo(0400000US06$0500000)"
+    data2 = requests.get(url2).json()
+    df2 = pd.DataFrame(data2[1:], columns=data2[0])
 
-    # The ID of your GCS object
-    # source_blob_name = "storage-object-name"
+    # Variable labels
+    vars_url = "https://api.census.gov/data/2016/acs/acs5/subject/variables.json"
+    vars_data = requests.get(vars_url).json()['variables']
 
-    storage_client = storage.Client()
-    bucket = storage_client.bucket(bucket_name)
+    def label_cols(df):
+        new_cols = {}
+        for col in df.columns:
+            if col in vars_data:
+                new_cols[col] = vars_data[col]['label']
+        df.rename(columns=new_cols, inplace=True)
+        return df
 
-    # Construct a client side representation of a blob.
-    # Note `Bucket.blob` differs from `Bucket.get_blob` as it doesn't retrieve
-    # any content from Google Cloud Storage. As we don't need additional data,
-    # using `Bucket.blob` is preferred here.
-    blob = bucket.blob(source_blob_name)
-    data = blob.download_as_text()
-    return pd.read_csv(StringIO(data))
+    df1 = label_cols(df1)
+    df2 = label_cols(df2)
 
+    df1 = df1.loc[:, ~df1.columns.str.contains('Margin|Percent|Median|Geography|Ratio|S0101')]
+    df2 = df2.loc[:, ~df2.columns.str.contains('Margin|Percent|Median|Geography|Ratio|S0501')]
 
-# Incorporate data
-df = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/gapminder2007.csv')
+    merged = pd.merge(df1, df2, on='NAME', how='outer')
+    merged['County'] = merged['NAME'].str.replace(' County, California', '', regex=False).str.title()
 
-# Initialize the app
-app = Dash()
+    # Election data
+    election_url = 'https://raw.githubusercontent.com/yourusername/yourrepo/main/csv-candidates-2016-cleaned.csv'  # Use GitHub or GCS to host this
+    election_df = pd.read_csv(election_url)
+    election_df['County'] = election_df['County'].str.title()
+    merged = pd.merge(merged, election_df, on='County', how='inner')
 
-# the underlying Flask server instance that Dash uses to run the application
-# Many WSGI servers (e.g., Gunicorn, uWSGI) expect a server object.
-# https://dash.plotly.com/deployment
-server = app.server
+    merged['Ratio'] = merged['Democratic Vote Total'] / merged['Republican Vote Total']
+    return merged
 
-# Cloud Storage demo
-#BUCKET_NAME = os.environ.get("BUCKET_NAME")
-#df2 = get_csv_from_gcs(BUCKET_NAME, 'customers-100-simple.csv')
+merged_df = fetch_and_prepare_data()
 
-# App layout
-app.layout = html.Div([
-    html.Div(children='My First App with Data, Graph, and Controls'),
-    html.Hr(),
-    dcc.RadioItems(options=['pop', 'lifeExp', 'gdpPercap'], value='lifeExp', id='controls-and-radio-item'),
-    dash_table.DataTable(data=df.to_dict('records'), page_size=6),
-    dcc.Graph(figure={}, id='controls-and-graph'),
-    html.Hr(),
-    # this is a separate table for google cloud storage demo
-#    dash_table.DataTable(data=df2.to_dict('records'), page_size=6) 
-])
+# ------------------ Plot Definitions ------------------
 
-# Add controls to build the interaction
-@callback(
-    Output(component_id='controls-and-graph', component_property='figure'),
-    Input(component_id='controls-and-radio-item', component_property='value')
-)
-def update_graph(col_chosen):
-    fig = px.histogram(df, x='continent', y=col_chosen, histfunc='avg')
+def make_scatter(x_col, title, xlabel):
+    fig = px.scatter(merged_df, x=x_col, y='Ratio',
+                     labels={'x': xlabel, 'Ratio': 'Dem/Rep Vote Ratio'},
+                     title=title)
+    fig.update_layout(height=400)
     return fig
 
+plots = [
+    {
+        "title": "Bachelor's Degree or Higher vs. Vote Ratio",
+        "x_col": "Total!!Estimate!!EDUCATIONAL ATTAINMENT!!Population 25 years and over!!Graduate or professional degree",
+        "xlabel": "Percent with Graduate or Professional Degree"
+    },
+    {
+        "title": "Some College or Associate Degree vs. Vote Ratio",
+        "x_col": "Native!!Estimate!!EDUCATIONAL ATTAINMENT!!Population 25 years and over!!Some college or associate's degree",
+        "xlabel": "Percent with Some College or Associate Degree"
+    },
+    {
+        "title": "Science/Management Industry vs. Vote Ratio",
+        "x_col": "Native!!Estimate!!INDUSTRY!!Professional, scientific, and management, and administrative and waste management services",
+        "xlabel": "Percent Employed in Science/Management"
+    },
+    {
+        "title": "Income $25K–$35K vs. Vote Ratio",
+        "x_col": "Native!!Estimate!!EARNINGS IN THE PAST 12 MONTHS (IN 2016 INFLATION-ADJUSTED DOLLARS) FOR FULL-TIME, YEAR-ROUND WORKERS!!Population 16 years and over with earnings!!$25,000 to $34,999",
+        "xlabel": "Percent Earning $25K–$35K"
+    }
+]
 
-# Run the app
+# ------------------ Dash App ------------------
+
+app = Dash(__name__)
+server = app.server
+
+app.layout = html.Div([
+    html.H1("2016 Presidential Vote Ratio vs. Socioeconomic Factors"),
+    html.Div([dcc.Graph(figure=make_scatter(p['x_col'], p['title'], p['xlabel'])) for p in plots])
+])
+
 if __name__ == '__main__':
     app.run(debug=True)

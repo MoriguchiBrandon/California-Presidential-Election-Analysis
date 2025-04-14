@@ -40,7 +40,7 @@ def fetch_and_prepare_data():
     merged['County'] = merged['NAME'].str.replace(' County, California', '', regex=False).str.title()
 
     # Election data
-    election_url = 'https://raw.githubusercontent.com/yourusername/yourrepo/main/csv-candidates-2016-cleaned.csv'  # Use GitHub or GCS to host this
+    election_url = 'https://raw.githubusercontent.com/MoriguchiBrandon/New-Repository/main/electionData/csv-candidates-2016-cleaned.csv'  
     election_df = pd.read_csv(election_url)
     election_df['County'] = election_df['County'].str.title()
     merged = pd.merge(merged, election_df, on='County', how='inner')

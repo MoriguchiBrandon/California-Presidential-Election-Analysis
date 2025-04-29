@@ -6,4 +6,3 @@ Flask
 gunicorn
 google-cloud-storage
 requests
-json

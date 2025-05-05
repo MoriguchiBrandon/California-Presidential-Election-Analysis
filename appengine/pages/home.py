@@ -41,7 +41,7 @@ counties_geojson = response.json()
 
 # Load model predictions
 model_predictions = {
-    "NN": pd.read_csv('https://raw.githubusercontent.com/MoriguchiBrandon/California-Presidential-Election-Analysis/main/electionData/2024_prediction_NN.csv'),
+    "MLP": pd.read_csv('https://raw.githubusercontent.com/MoriguchiBrandon/California-Presidential-Election-Analysis/main/electionData/2024_prediction_NN.csv'),
     "RF": pd.read_csv('https://raw.githubusercontent.com/MoriguchiBrandon/California-Presidential-Election-Analysis/main/electionData/2024_prediction_RandomForest.csv'),
     "GB": pd.read_csv('https://raw.githubusercontent.com/MoriguchiBrandon/California-Presidential-Election-Analysis/main/electionData/2024_prediction_GradientBoost.csv')
 }
@@ -110,7 +110,7 @@ def layout():
         dcc.RadioItems(
             id='model-toggle',
             options=[
-                {'label': 'Neural Network', 'value': 'NN'},
+                {'label': 'Multi-Layer Perceptron', 'value': 'MLP'},
                 {'label': 'Random Forest', 'value': 'RF'},
                 {'label': 'Gradient Boosting', 'value': 'GB'},
             ],

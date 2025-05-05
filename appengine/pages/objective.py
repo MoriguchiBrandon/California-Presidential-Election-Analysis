@@ -54,9 +54,12 @@ layout = html.Div(
             html.Li("Employment Sectors"),
             html.Li("Housing Characteristics"),
         ]),
+
+        html.H4("CA Counties Geomaping"),
+        html.P("Provides Geojson corrdinates for mapping California counties."),
         html.P([
             "Source: ",
-            html.A("U.S. Census Bureau", href="https://data.census.gov/", target="_blank")
+            html.A("Code For Germany Github", href="https://github.com/codeforgermany/click_that_hood/blob/main/public/data/california-counties.geojson", target="_blank")
         ]),
 
         html.H2("Expected Major Findings", style={"marginTop": "2rem"}),

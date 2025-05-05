@@ -66,7 +66,7 @@ To explore relationships between demographic factors and voting outcomes, we:
             dcc.Markdown("""
 We trained predictive models to estimate the 2024 vote ratio per county:
 
-- **Neural Network (MLP):**  
+- **Multi-Layer Perceptron (MLP):**  
   - Built using TensorFlow/Keras  
   - Input features included all merged census metrics  
 

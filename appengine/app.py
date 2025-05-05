@@ -1,5 +1,5 @@
 import dash
-from dash import Dash, html, dcc
+from dash import Dash, html, dcc, page_container
 import dash_bootstrap_components as dbc
 
 # Initialize the Dash app
@@ -10,7 +10,10 @@ server = app.server
 app.layout = dbc.Container([
     dbc.Row([
         dbc.Col([
-            html.H2("Navigation", className="display-6"),
+            html.Img(
+                src="/assets/Navigation.jpg",  
+                style={"width": "100%", "margin-bottom": "1rem"}
+            ),
             html.Hr(),
             dbc.Nav(
                 [
@@ -23,8 +26,11 @@ app.layout = dbc.Container([
                 pills=True,
             ),
         ], width=2, style={"background-color": "#f8f9fa", "padding": "20px", "height": "100vh"}),
-        
-        dbc.Col(dash.page_container, width=10),
+
+        # Main content area
+        dbc.Col([
+            page_container
+        ], width=10, style={"padding": "20px"})
     ])
 ], fluid=True)
 

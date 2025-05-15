@@ -84,7 +84,7 @@ fig_discrete = px.choropleth_mapbox(
 )
 fig_discrete.update_layout(
     title="California 2024 Presidential Election Results by County (Red/Blue)",
-    height=800,
+    height=1000,
 )
 
 # --- Layout ---
@@ -193,7 +193,7 @@ def update_color_map(selected_model):
         opacity=0.6,)
     fig.update_layout(
         title=f"Model ({selected_model}) – Predicted Election Results by County (Red/Blue)",
-        height=800,
+        height=1000,
         margin={"r":0, "t":50, "l":0, "b":0}
     )
     return fig

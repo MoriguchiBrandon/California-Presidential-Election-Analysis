@@ -9,6 +9,10 @@ layout = html.Div(
     children=[
         html.H1("California Election Results Prediction", style={"marginBottom": "1rem"}),
         html.H5("Brandon Moriguchi, Jaspreet Singh"),
+        html.P([
+            "Project Github: ",
+            html.A("California-Presidential-Election-Analysis", href="https://github.com/MoriguchiBrandon/California-Presidential-Election-Analysis", target="_blank")
+        ]),
         html.Hr(),
 
         html.H2("Project Summary", style={"marginTop": "2rem"}),
